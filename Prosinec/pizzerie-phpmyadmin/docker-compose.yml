@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  db:
+    image: mariadb:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD=tajnyheslo
+      - MYSQL_DATABASE=Pizzerie
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+    container_name: databaze
+    restart: always
+    ports:
+      - 8306:3306
+    volumes:
+      - ./pizzerie.sql:/docker-entrypoint-initdb.d/pizzerie.sql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin
+    environment:
+      - PMA_HOST=db
+      - PMA_USER=user
+      - PMA_PASSWORD=password
+      - PMA_PORT=3306
+    restart: always
+    ports:
+      - 8080:80
+    depends_on:
+      - db
