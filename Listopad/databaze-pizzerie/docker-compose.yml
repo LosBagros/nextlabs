@@ -14,5 +14,10 @@ services:
       - 8306:3306
     volumes:
       - ./pizzerie.sql:/docker-entrypoint-initdb.d/pizzerie.sql
+    networks:
+      - databaze
+    
+networks:
+  databaze:
 
 # mysql -h 127.0.0.1 -P 8306 -u root -ptajnyheslo

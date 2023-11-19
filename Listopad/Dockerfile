@@ -4,6 +4,7 @@ FROM ubuntu:latest AS base
 # Nastavení argumentů
 ARG USERNAME=default
 ARG PASSWORD=secret
+ARG VERSION=2.0
 
 # Aktualizace systému
 RUN apt-get update -y && apt-get upgrade -y
@@ -18,11 +19,13 @@ WORKDIR /home/$USERNAME
 VOLUME ["/home/$USERNAME/data"]
 
 # Otagování obrazu
-LABEL version="1.0"
 LABEL description="Basic Ubuntu Image"
+LABEL version="${VERSION}"
 
 # Informační výstup
-CMD ["echo", "Image was built successfully!"]
+CMD ["echo", "Image was built successfully! "]
+CMD ["echo", "Version: ${VERSION}"]
+
 
 # Shell při spuštění kontejneru
 CMD ["/bin/bash"]
@@ -31,4 +34,4 @@ CMD ["/bin/bash"]
 # docker build -t ubuntuimage --build-arg USERNAME=bagros --build-arg PASSWORD=tajnyheslo .
 
 # spuštění kontejneru Docker
-# docker run --name ubuntuimg -it -v "$(pwd)/mydata:/home/bagros/data" ubuntuimage
+# docker run -it -v "$(pwd)/:/home/bagros/data" ubuntuimage

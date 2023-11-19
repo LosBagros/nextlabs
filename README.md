@@ -83,3 +83,6 @@ Zabezpečení API s minimálně 2 metodami (např. token autentizace, rate limit
 - Live deploy
 - Monitorování platformy a problémů v reálném čase
 
+
+
+Implementace vizualizace datových sítí -> eve-ng nebo Kathara
