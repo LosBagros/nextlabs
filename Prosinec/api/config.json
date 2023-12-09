@@ -1,0 +1,11 @@
+[
+    {
+        "name": "MySQL",
+        "image": "mysql:latest",
+        "environment": ["MYSQL_ROOT_PASSWORD=my-secret-pw"]
+    },
+    {
+        "name": "Nginx",
+        "image": "nginx:latest"
+    }
+]

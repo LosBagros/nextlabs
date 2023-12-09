@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Docker Management Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="dark:bg-gray-800 dark:text-gray-200 m-4 text-center">
+    <h1 class="text-4xl font-bold text-gray-200">Docker Kontejnery</h1>
+    <button id="refresh" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 m-4 rounded">
+        Obnovit Seznam Kontejnerů
+    </button>
+    <label for="runningOnly" class="inline-flex items-center mt-3">
+        <input type="checkbox" id="runningOnly" class="form-checkbox h-5 w-5 text-blue-600">
+        <span class="ml-2 text-gray-200">Zobrazit pouze běžící kontejnery</span>
+    </label>
+    
+    <table class="min-w-full" id="containersTable">
+        <thead class="bg-gray-50 dark:bg-gray-700">
+            <!-- Hlavička tabulky -->
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+            <!-- Řádky tabulky -->
+        </tbody>
+    </table>
+    <select id="containerSelect" class="dark:bg-gray-800 dark:text-gray-200">
+        <!-- Možnosti budou naplněny dynamicky -->
+    </select>
+    <button id="startContainer" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        Vytvořit nový kontejner
+    </button>
+    <script src="app.js"></script>
+</body>
+</html>

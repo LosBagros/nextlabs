@@ -16,7 +16,7 @@ services:
       - ./pizzerie.sql:/docker-entrypoint-initdb.d/pizzerie.sql
     networks:
       - databaze
-    
+
 networks:
   databaze:
 
