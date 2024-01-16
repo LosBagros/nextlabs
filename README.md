@@ -3,14 +3,8 @@ Interaktivní Platforma pro Výuku
 
 **NEXT LABS** je platforma inspirována funkcionalitou TryHackMe a správou serverů na styl Pterodactyl Panelu. Cílem je nabídnout uživatelům moderní a flexibilní prostředí pro učení a praxi v oblasti IT.
 
-
-Projekt je rozdělen do 3 hlavních částí:
-- **Frontend** - Next.js
-- **Backend** - Docker API
-- **Databáze** - Prisma
-
-
-V Prosinci jsem testoval knihovnu `dockerode`. Použil jsem jednoduchý express server. Díky němu dokážu vytvářet, spouštět, zastavovat a mazat kontejnery. Při použití v Next.js se projekt nepostavil. Problém stále řeším. Při nejhorším zkusím jinou knihovnu. Další možnosti jsou použití externí express api. Poslední možnost je použití Docker Engine REST API
+## Progres:
+V Prosinci jsem testoval knihovnu `dockerode`. Použil jsem jednoduchý express server. Díky němu dokážu vytvářet, spouštět, zastavovat a mazat kontejnery. Při použití v Next.js se projekt nespustil. Problém stále řeším. Při nejhorším zkusím jinou knihovnu. Další možnosti jsou použití externí express api. Poslední možnost je použití Docker Engine REST API
 
 
 ## Použité technologie:
