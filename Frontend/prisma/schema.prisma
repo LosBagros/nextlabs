@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          UserRole  @default(USER)
+  accounts      Account[]
+  Room          Room[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId], map: "Account_userId_fkey")
+}
+
+model Room {
+  id          String           @id @default(cuid())
+  createdAt   DateTime         @default(now())
+  name        String
+  imageUrl    String?
+  description String?
+  difficulty  Difficulty
+  published   Boolean          @default(false)
+  authorId    String?
+  content     String?          @db.Text
+  slug        String           @unique
+  containers  DockerTemplate[]
+  author      User?            @relation(fields: [authorId], references: [id])
+
+  @@index([authorId], map: "Room_authorId_fkey")
+}
+
+model DockerTemplate {
+  id           String  @id @default(cuid())
+  name         String
+  image        String
+  internalPort Int
+  externalPort Int
+  roomId       String?
+  room         Room?   @relation(fields: [roomId], references: [id])
+
+  @@index([roomId], map: "DockerTemplate_roomId_fkey")
+}
+
+model DockerContainer {
+  id           String   @id @default(cuid())
+  userId       String
+  templateId   String
+  name         String
+  image        String
+  internalPort Int
+  externalPort Int
+  createdAt    DateTime @default(now())
+  isActive     Boolean  @default(true)
+  roomId       String?
+
+  @@unique([userId, templateId])
+}
+
+enum UserRole {
+  USER
+  TEACHER
+  ADMIN
+}
+
+enum Difficulty {
+  Easy
+  Medium
+  Hard
+}
