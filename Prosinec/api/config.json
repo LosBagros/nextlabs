@@ -1,8 +1,7 @@
 [
     {
-        "name": "MySQL",
-        "image": "mysql:latest",
-        "environment": ["MYSQL_ROOT_PASSWORD=my-secret-pw"]
+        "name": "MariaDB",
+        "image": "mariadb:latest"
     },
     {
         "name": "Nginx",

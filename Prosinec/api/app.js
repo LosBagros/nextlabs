@@ -45,7 +45,8 @@ function loadContainers() {
             const containersTable = document.getElementById('containersTable').getElementsByTagName('tbody')[0];
             containersTable.innerHTML = ''; // Clear existing rows
             const isRunningOnly = document.getElementById('runningOnly').checked;
-            
+            // filter registry
+            containers = containers.filter(container => !container.Names[0].startsWith('/registry'));
             
             containers
             .filter(container => !isRunningOnly || container.State === 'running')
