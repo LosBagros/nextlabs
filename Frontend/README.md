@@ -1,3 +1,13 @@
-https://youtu.be/1MTyCvS05V4?si=ImvC0BSgFGWO_H4N&t=11178
+Návod na spuštění projektu
 
-doucit se server actions vs api routes next js
+1. Nainstalujte Node.js
+2. Nainstalujte potřebné knihovny pomocí:
+```bash
+npm install
+```
+3. Přejmenujte .env.example na .env
+4. Nastavte proměnné v .env
+5. Spusťte projekt pomocí:
+```bash
+npm run dev
+```
