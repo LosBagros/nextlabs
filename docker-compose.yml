@@ -1,0 +1,44 @@
+services:
+  # apt cache server
+  apt-cache:
+    build:
+      context: apt-cache
+    container_name: apt-cache
+    restart: unless-stopped
+    ports:
+      # - 127.0.0.1:3142:3142
+      - 3142:3142
+    volumes:
+      - ./apt-cache/cache:/var/cache/apt-cacher-ng
+    networks:
+      - nextlabs
+
+  # pypi (python) cache server
+  pypiserver:
+    image: pypiserver/pypiserver:latest
+    container_name: pypi-cache
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./pypi-cache:/data/packages
+    networks:
+      - nextlabs
+
+  # npmjs cache
+  verdaccio:
+    image: verdaccio/verdaccio
+    container_name: 'npmjs-cache'
+    networks:
+      - nextlabs
+    environment:
+      - VERDACCIO_PORT=4873
+    ports:
+      - '4873:4873'
+    volumes:
+      - './verdaccio/storage:/verdaccio/storage'
+      - './verdaccio/config:/verdaccio/conf'
+      - './verdaccio/plugins:/verdaccio/plugins'
+
+networks:
+  nextlabs:
+    external: true
