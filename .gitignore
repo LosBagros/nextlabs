@@ -1,2 +1,4 @@
 apt-cache/cache/
 pypi-cache/
+
+.env

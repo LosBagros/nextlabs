@@ -1,0 +1,20 @@
+homelab.local:3000 {
+    reverse_proxy grafana:3000
+    tls internal
+}
+
+:9092 {
+    reverse_proxy cadvisor:9092
+}
+
+:9090 {
+    reverse_proxy prometheus:9090
+}
+
+:9093 {
+    reverse_proxy alertmanager:9093
+}
+
+:9091 {
+    reverse_proxy pushgateway:9091
+}
