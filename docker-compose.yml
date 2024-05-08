@@ -122,6 +122,16 @@ services:
     networks:
       - monitor-net
 
+  containers-api:
+    container_name: containers-api
+    build:
+      context: api
+    ports:
+      - "8000:8000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+
 networks:
   nextlabs:
     external: true

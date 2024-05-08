@@ -47,7 +47,7 @@ def run_container(email: EmailStr, containerImage: str):
             repotags = image.attrs.get("RepoTags", [])
             if containerImage in repotags:
                 container = client.containers.run(
-                    image=containerImage, detach=True, labels={"user": email})
+                    image=containerImage, detach=True, network="nextlabs", labels={"user": email})
                 # Return a dictionary with container details you wish to expose
                 return Container(
                     name=container.attrs["Config"]["Hostname"],

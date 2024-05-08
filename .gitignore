@@ -4,3 +4,5 @@ pypi-cache/
 verdaccio/storage/
 venv/
 __pycache__/
+openvpn/
+bagros.ovpn
