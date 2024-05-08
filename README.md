@@ -29,9 +29,7 @@ Using pypiserver
 #### Config for clients:
 
 ```
-echo "[global]
-extra-index-url = http://pypi-cache:8080/simple/
-trusted-host = pypi-cache:8080" >> /root/.pip/pip.conf
+printf "[global]\nextra-index-url = http://pypi-cache:8080/simple/\ntrusted-host = pypi-cache:8080" > /root/.pip/pip.conf
 ```
 
 
@@ -40,7 +38,7 @@ trusted-host = pypi-cache:8080" >> /root/.pip/pip.conf
 Using verdaccio
 
 ```
-npm set registry http://localhost:4873/
+npm set registry http://verdaccio:4873/
 ```
 
 ## Docker setup

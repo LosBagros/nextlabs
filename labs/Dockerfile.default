@@ -5,6 +5,7 @@ RUN apt update && apt install -y \
     vim \
     curl \
     wget \
+    iputils-ping \
     git \
     build-essential \ 
     openssh-server

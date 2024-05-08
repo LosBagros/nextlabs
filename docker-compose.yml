@@ -37,14 +37,13 @@ services:
     volumes:
       - './verdaccio/storage:/verdaccio/storage'
       - './verdaccio/config:/verdaccio/conf'
-      - './verdaccio/plugins:/verdaccio/plugins'
-
   grafana:
     image: grafana/grafana:latest
+    container_name: grafana
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/datasources:/etc/grafana/datasources
-      - ./monitoring/grafana/dashboards:/etc/grafana/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
     environment:
       - GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
@@ -61,14 +60,19 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor
     container_name: cadvisor
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
+      - /cgroup:/cgroup:ro
     restart: unless-stopped
     command:
       - '-port=9092'
+      - '-housekeeping_interval=10s'
     expose:
       - 9092
     networks:
@@ -92,6 +96,7 @@ services:
   # system metrics
   node-exporter:
     image: prom/node-exporter
+    container_name: node-exporter
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
