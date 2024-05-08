@@ -30,7 +30,7 @@ def list_nextlabs_containers():
             hostname=container.name,
             state=container.attrs["State"]["Status"],
             running=container.attrs["State"]["Running"],
-            ipaddress=container.attrs['NetworkSettings']['IPAddress'],
+            ipaddress=container.attrs["Networks"]["nextlabs"]["IPAddress"],
             image=container.image.tags[0],
             user=container.labels.get("user")
         ) for container in nextlabs_containers
@@ -54,7 +54,7 @@ def run_container(email: EmailStr, containerImage: str):
                     hostname=container.name,
                     state=container.attrs["State"]["Status"],
                     running=container.attrs["State"]["Running"],
-                    ipaddress=container.attrs['NetworkSettings']['IPAddress'],
+                    ipaddress=container.attrs["Networks"]["nextlabs"]["IPAddress"],
                     image=container.image.tags[0],
                     user=container.labels.get("user"))
 
@@ -116,7 +116,7 @@ def list_user_containers(user_email: EmailStr):
             hostname=container.name,
             state=container.attrs["State"]["Status"],
             running=container.attrs["State"]["Running"],
-            ipaddress=container.attrs['NetworkSettings']['IPAddress'],
+            ipaddress=container.attrs["Networks"]["nextlabs"]["IPAddress"],
             image=container.image.tags[0],
             user=container.labels.get("user")
         ) for container in user_containers
