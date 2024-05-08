@@ -37,7 +37,18 @@ services:
     volumes:
       - './verdaccio/storage:/verdaccio/storage'
       - './verdaccio/config:/verdaccio/conf'
-      - './verdaccio/plugins:/verdaccio/plugins'
+
+  vpn:
+    build:
+      context: vpn
+    container_name: vpn
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "1194:1194/udp"
+    volumes:
+      - ./vpn/data:/etc/openvpn
+    restart: unless-stopped
 
 networks:
   nextlabs:
