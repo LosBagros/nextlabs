@@ -1,4 +1,4 @@
 apt-cache/cache/
 pypi-cache/
-
 .env
+verdaccio/storage/

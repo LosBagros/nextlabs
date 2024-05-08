@@ -1,5 +1,12 @@
 # Nextlabs - Server
 
+## TODO:
+
+- [] Make vpn vork
+- [] Fastapi for controlling containers
+- [] Vpn account management for users using api
+- [] Documentation
+
 `docker run -dit --name ubuntu-container --network nextlabs ubuntu`
 
 ## Cache
@@ -12,7 +19,7 @@ Using Apt-Cacher NG
 
 http://homelab:3142/
 
-http://homelab  :3142/acng-report.html/
+http://homelab :3142/acng-report.html/
 
 #### Config for clients:
 
@@ -25,13 +32,11 @@ echo 'Acquire::HTTP::Proxy "http://apt-cache:3142";' >> /etc/apt/apt.conf.d/01pr
 
 Using pypiserver
 
-
 #### Config for clients:
 
 ```
 printf "[global]\nextra-index-url = http://pypi-cache:8080/simple/\ntrusted-host = pypi-cache:8080" > /root/.pip/pip.conf
 ```
-
 
 ### NpmJS cache
 
@@ -50,6 +55,6 @@ docker network create nextlabs
 sudo iptables -I DOCKER-USER -i docker0 -d 192.168.0.0/24 -j DROP
 ```
 
-## Monitoring 
+## Monitoring
 
 https://github.com/stefanprodan/dockprom/
