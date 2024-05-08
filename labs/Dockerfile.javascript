@@ -1,5 +1,8 @@
 FROM ubuntu
 
+# NEXTLABS
+LABEL project="nextlabs"
+
 RUN apt update && apt install -y \
     nano \
     vim \
