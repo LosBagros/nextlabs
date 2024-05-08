@@ -58,3 +58,13 @@ sudo iptables -I DOCKER-USER -i docker0 -d 192.168.0.0/24 -j DROP
 ## Monitoring
 
 https://github.com/stefanprodan/dockprom/
+
+## VPN
+
+after seversl tries, I found that the best way to make vpn work is to use the following script:
+
+```bash
+wget https://git.io/vpn -O openvpn-install.sh
+chmod +x openvpn-install.sh
+sudo ./openvpn-install.sh
+```

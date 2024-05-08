@@ -38,17 +38,6 @@ services:
       - './verdaccio/storage:/verdaccio/storage'
       - './verdaccio/config:/verdaccio/conf'
 
-  vpn:
-    build:
-      context: vpn
-    container_name: vpn
-    cap_add:
-      - NET_ADMIN
-    ports:
-      - "1194:1194/udp"
-    volumes:
-      - ./vpn/data:/etc/openvpn
-    restart: unless-stopped
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -65,8 +54,6 @@ services:
       - 3000
     networks:
       - monitor-net
-    labels:
-      org.label-schema.group: "monitoring"
 
   # docker metrics
   cadvisor:
@@ -89,8 +76,6 @@ services:
       - 9092
     networks:
       - monitor-net
-    labels:
-      org.label-schema.group: "monitoring"
 
   # time series database
   prometheus:
@@ -102,8 +87,6 @@ services:
       - 9090
     networks:
       - monitor-net
-    labels:
-      org.label-schema.group: "monitoring"
 
   # system metrics
   node-exporter:
@@ -123,8 +106,6 @@ services:
       - 9100
     networks:
       - monitor-net
-    labels:
-      org.label-schema.group: "monitoring"
 
   caddy:
     image: caddy:2.7.6
@@ -140,8 +121,6 @@ services:
     restart: unless-stopped
     networks:
       - monitor-net
-    labels:
-      org.label-schema.group: "monitoring"
 
 networks:
   nextlabs:
