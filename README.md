@@ -42,3 +42,16 @@ Using verdaccio
 ```
 npm set registry http://localhost:4873/
 ```
+
+## Docker setup
+
+```
+docker network create nextlabs
+
+# firewall for my local network
+sudo iptables -I DOCKER-USER -i docker0 -d 192.168.0.0/24 -j DROP
+```
+
+## Monitoring 
+
+https://github.com/stefanprodan/dockprom/
