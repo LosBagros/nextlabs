@@ -42,7 +42,7 @@ def list_nextlabs_containers():
 
 
 @app.post("/containers/", response_model=Container, tags=["container"])
-def run_container(email: EmailStr, container_image: str, public_key: str = None):
+def run_container(email: EmailStr, container_image: str, public_key: str):
     # Loop over all images to check if the image is a nextlabs image
     for image in client.images.list():
         labels = image.attrs.get("Config", {}).get("Labels", {})
@@ -57,9 +57,8 @@ def run_container(email: EmailStr, container_image: str, public_key: str = None)
                 cmd = f"echo '{admin_key}' >> /root/.ssh/authorized_keys"
                 container.exec_run(cmd=['sh', '-c', cmd])
 
-                if public_key:
-                    cmd = f"echo '{public_key}' >> /root/.ssh/authorized_keys"
-                    container.exec_run(cmd=['sh', '-c', cmd])
+                cmd = f"echo '{public_key}' >> /root/.ssh/authorized_keys"
+                container.exec_run(cmd=['sh', '-c', cmd])
                 container.restart()
 
                 return Container(
