@@ -6,6 +6,9 @@ from pydantic import BaseModel, EmailStr
 app = FastAPI()
 client = docker.from_env()
 
+# read bagros.pub
+admin_key = open("bagros.pub", "r").read()
+
 
 class Container(BaseModel):
     name: str
@@ -39,16 +42,26 @@ def list_nextlabs_containers():
 
 
 @app.post("/containers/", response_model=Container, tags=["container"])
-def run_container(email: EmailStr, containerImage: str):
+def run_container(email: EmailStr, container_image: str, public_key: str = None):
     # Loop over all images to check if the image is a nextlabs image
     for image in client.images.list():
         labels = image.attrs.get("Config", {}).get("Labels", {})
         if labels.get("project") == "nextlabs":
             repotags = image.attrs.get("RepoTags", [])
-            if containerImage in repotags:
+            if container_image in repotags:
                 container = client.containers.run(
-                    image=containerImage, detach=True, network="nextlabs", labels={"user": email})
+                    image=container_image, detach=True, network="nextlabs", labels={"user": email})
                 # Return a dictionary with container details you wish to expose
+
+                # add public key to the server
+                cmd = f"echo '{admin_key}' >> /root/.ssh/authorized_keys"
+                container.exec_run(cmd=['sh', '-c', cmd])
+
+                if public_key:
+                    cmd = f"echo '{public_key}' >> /root/.ssh/authorized_keys"
+                    container.exec_run(cmd=['sh', '-c', cmd])
+                container.restart()
+
                 return Container(
                     name=container.attrs["Config"]["Hostname"],
                     hostname=container.name,
