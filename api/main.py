@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine, Column, Integer, String, DateTime
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.responses import FileResponse
 import docker
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import create_engine
@@ -100,6 +101,8 @@ def run_container(email: EmailStr, container_image: str, public_key: str, db: Se
             hostname=container.attrs["Config"]["Hostname"], status="running", stop_at=stop_time, image=container_image)
         db.add(db_container)
         db.commit()
+
+        container = client.containers.get(container.name)
 
         return Container(
             name=container.name,
@@ -259,10 +262,24 @@ def list_images():
     return nextlabs_images
 
 
-@app.post("/vpn/", tags=["vpn"])
+# VPN CRUD
+@app.post("/vpn/create", tags=["vpn"])
 def create_vpn_for_user():
-    # TODO: Create a VPN for the user
+    # TODO: Implement creating VPN for the user
     return {"message": "VPN created"}
+
+
+@app.delete("/vpn/delete", tags=["vpn"])
+def delete_vpn_for_user():
+    # TODO: Implement deleting VPN for the user
+    return {"message": "VPN deleted"}
+
+# this is so dumb implementation, but fuck it
+
+
+@app.get("/vpn/", response_class=FileResponse, tags=["vpn"])
+def get_user_vpn(user_email: EmailStr):
+    return FileResponse("test.ovpn")
 
 
 scheduler = BackgroundScheduler()
