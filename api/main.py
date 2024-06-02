@@ -6,13 +6,15 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine, Column, Integer, String, DateTime
-from fastapi import FastAPI, HTTPException, Depends
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException, Depends, Response
 import docker
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import create_engine
 
-app = FastAPI()
+app = FastAPI(
+    title="Nextlabs API",
+    description="API for Nextlabs project",
+)
 client = docker.from_env()
 
 # read bagros.pub
@@ -157,7 +159,7 @@ def delete_old_stopped_containers():
     db.commit()
 
 
-@app.delete("/containers/{container_hostname}", tags=["container"])
+@app.delete("/containers/", tags=["container"])
 def delete_container(container_hostname: str):
     try:
         container = client.containers.get(container_hostname)
@@ -176,7 +178,7 @@ def delete_container(container_hostname: str):
         raise HTTPException(status_code=404, detail="Container not found")
 
 
-@app.post("/containers/stop/{container_hostname}", tags=["container"])
+@app.post("/containers/stop/", tags=["container"])
 def stop_container(container_hostname: str):
     db = SessionLocal()
     try:
@@ -191,7 +193,7 @@ def stop_container(container_hostname: str):
         raise HTTPException(status_code=404, detail="Container not found")
 
 
-@app.post("/containers/start/{container_name}", tags=["container"])
+@app.post("/containers/start/", tags=["container"])
 def start_container(container_name: str):
     db = SessionLocal()
     stop_time = datetime.now() + timedelta(hours=1)
@@ -207,7 +209,7 @@ def start_container(container_name: str):
         raise HTTPException(status_code=404, detail="Container not found")
 
 
-@app.post("/containers/restart/{container_name}", tags=["container"])
+@app.post("/containers/restart/", tags=["container"])
 def restart_container(container_name: str):
     try:
         container = client.containers.get(container_name)
@@ -217,7 +219,7 @@ def restart_container(container_name: str):
         raise HTTPException(status_code=404, detail="Container not found")
 
 
-@app.get("/user/containers/{user_email}", response_model=list[Container], tags=["user"])
+@app.get("/user/containers/", response_model=list[Container], tags=["user"])
 def list_user_containers(user_email: EmailStr):
     containers = client.containers.list(all=True)
     user_containers = [
@@ -238,7 +240,7 @@ def list_user_containers(user_email: EmailStr):
     return user_containers
 
 
-@app.post("/user/containers/stop/{user_email}", tags=["user"])
+@app.post("/user/containers/stop/", tags=["user"])
 def stop_user_containers(user_email: EmailStr):
     containers = client.containers.list(all=True)
     user_containers = [
@@ -267,19 +269,40 @@ def list_images():
 # VPN CRUD
 vpn_image = "kylemanna/openvpn"
 vpn_data = "/root/vpn"
+volume_mapping = {vpn_data: {'bind': '/etc/openvpn', 'mode': 'rw'}}
 
 
-@app.post("/vpn/create", tags=["vpn"])
-def create_vpn_for_user(email: EmailStr):
-    # TODO: Check if VPN already exists for the user
+def check_existing_vpn(email: EmailStr):
     vpn_clients = vpn_list()
     for client in vpn_clients:
         if client['name'] == email:
-            return {"message": "VPN already exists"}
+            return True
+    return False
+
+
+def download_vpn(email: EmailStr):
+    # docker run -v /root/vpn:/etc/openvpn --rm kylemanna/openvpn ovpn_getclient CLIENTNAME > CLIENTNAME.ovpn
+    container = client.containers.run(
+        image=vpn_image,
+        command=f"ovpn_getclient {email}",
+        volumes=volume_mapping,
+        remove=False,
+        detach=True
+    )
+    container.wait()
+    vpn_client = container.logs()
+    container.remove()
+    return vpn_client
+
+
+# @app.post("/vpn/create", tags=["vpn"])
+def create_vpn_for_user(email: EmailStr):
+    if check_existing_vpn(email):
+        raise HTTPException(status_code=404, detail="VPN already exists")
     client.containers.run(
         vpn_image,
         command=f"easyrsa build-client-full {email} nopass",
-        volumes={vpn_data: {'bind': '/etc/openvpn', 'mode': 'rw'}},
+        volumes=volume_mapping,
         remove=True,
         detach=True,
         tty=True
@@ -293,7 +316,7 @@ def vpn_list():
     container = client.containers.run(
         vpn_image,
         command="ovpn_listclients",
-        volumes={vpn_data: {'bind': '/etc/openvpn', 'mode': 'rw'}},
+        volumes=volume_mapping,
         detach=True,
         remove=False,
         tty=True
@@ -313,32 +336,31 @@ def vpn_list():
     container.remove()
     return output
 
-
-@app.delete("/vpn/delete", tags=["vpn"])
-def delete_vpn_for_user(email: EmailStr):
-    raise HTTPException(status_code=404, detail="Not implemented")
-    vpn_clients = vpn_list()
-    for client in vpn_clients:
-        if client['name'] == email:
-            client.containers.run(
-                vpn_image,
-                command=f"ovpn_revokeclient {email}",
-                volumes={vpn_data: {'bind': '/etc/openvpn', 'mode': 'rw'}},
-                remove=True,
-                detach=True,
-                tty=True
-            )
-            # TODO: need to type yes to revoke the client
-            return {"message": "VPN deleted"}
-    raise HTTPException(status_code=404, detail="Client not found")
-
-
 # this is so dumb implementation, but fuck it
 
 
-@app.get("/vpn/", response_class=FileResponse, tags=["vpn"])
-def get_user_vpn(user_email: EmailStr):
-    return FileResponse("test.ovpn")
+@app.get("/vpn/download", tags=["vpn"])
+def get_user_vpn(email: EmailStr):
+    if not check_existing_vpn(email):
+        create_vpn_for_user(email)
+    return Response(content=download_vpn(email), media_type="text/plain")
+
+
+@app.delete("/vpn/delete", tags=["vpn"], deprecated=True)
+def delete_vpn_for_user(email: EmailStr):
+    raise HTTPException(status_code=404, detail="Not implemented")
+    if check_existing_vpn(email):
+        client.containers.run(
+            vpn_image,
+            command=f"ovpn_revokeclient {email}",
+            volumes={vpn_data: {'bind': '/etc/openvpn', 'mode': 'rw'}},
+            remove=True,
+            detach=True,
+            tty=True
+        )
+        # TODO: need to type yes to revoke the client
+        return {"message": "VPN deleted"}
+    raise HTTPException(status_code=404, detail="Client not found")
 
 
 scheduler = BackgroundScheduler()
