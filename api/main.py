@@ -242,6 +242,7 @@ def list_user_containers(user_email: EmailStr):
 
 @app.post("/user/containers/stop/", tags=["user"])
 def stop_user_containers(user_email: EmailStr):
+    db = SessionLocal()
     containers = client.containers.list(all=True)
     user_containers = [
         container for container in containers
@@ -249,6 +250,11 @@ def stop_user_containers(user_email: EmailStr):
     ]
     for container in user_containers:
         container.stop()
+        container_hostname = container.attrs["Config"]["Hostname"]
+        db.query(dbContainer).filter(dbContainer.hostname == container_hostname).update(
+            {"status": "stopped", "stopped_at": datetime.now(), "stop_at": None})
+        db.commit()
+
     return {"message": "Containers stopped"}
 
 
