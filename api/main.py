@@ -1,3 +1,5 @@
+from io import StringIO
+import csv
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime, timedelta
@@ -263,16 +265,73 @@ def list_images():
 
 
 # VPN CRUD
+vpn_image = "kylemanna/openvpn"
+vpn_data = "/root/vpn"
+
+
 @app.post("/vpn/create", tags=["vpn"])
-def create_vpn_for_user():
-    # TODO: Implement creating VPN for the user
+def create_vpn_for_user(email: EmailStr):
+    # TODO: Check if VPN already exists for the user
+    vpn_clients = vpn_list()
+    for client in vpn_clients:
+        if client['name'] == email:
+            return {"message": "VPN already exists"}
+    client.containers.run(
+        vpn_image,
+        command=f"easyrsa build-client-full {email} nopass",
+        volumes={vpn_data: {'bind': '/etc/openvpn', 'mode': 'rw'}},
+        remove=True,
+        detach=True,
+        tty=True
+    )
     return {"message": "VPN created"}
 
 
+@app.get("/vpn/list", tags=["vpn"])
+def vpn_list():
+    # docker run --rm -it -v $OVPN_DATA:/etc/openvpn kylemanna/openvpn ovpn_listclients
+    container = client.containers.run(
+        vpn_image,
+        command="ovpn_listclients",
+        volumes={vpn_data: {'bind': '/etc/openvpn', 'mode': 'rw'}},
+        detach=True,
+        remove=False,
+        tty=True
+    )
+    container.wait()
+    f = StringIO(container.logs().decode('utf-8'))
+    reader = csv.DictReader(f)
+
+    output = []
+    for row in reader:
+        row['begin'] = datetime.strptime(
+            row['begin'], '%b %d %H:%M:%S %Y %Z').strftime('%Y-%m-%d %H:%M:%S %Z')
+        row['end'] = datetime.strptime(
+            row['end'], '%b %d %H:%M:%S %Y %Z').strftime('%Y-%m-%d %H:%M:%S %Z')
+        output.append(row)
+
+    container.remove()
+    return output
+
+
 @app.delete("/vpn/delete", tags=["vpn"])
-def delete_vpn_for_user():
-    # TODO: Implement deleting VPN for the user
-    return {"message": "VPN deleted"}
+def delete_vpn_for_user(email: EmailStr):
+    raise HTTPException(status_code=404, detail="Not implemented")
+    vpn_clients = vpn_list()
+    for client in vpn_clients:
+        if client['name'] == email:
+            client.containers.run(
+                vpn_image,
+                command=f"ovpn_revokeclient {email}",
+                volumes={vpn_data: {'bind': '/etc/openvpn', 'mode': 'rw'}},
+                remove=True,
+                detach=True,
+                tty=True
+            )
+            # TODO: need to type yes to revoke the client
+            return {"message": "VPN deleted"}
+    raise HTTPException(status_code=404, detail="Client not found")
+
 
 # this is so dumb implementation, but fuck it
 
