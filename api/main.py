@@ -6,15 +6,30 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine, Column, Integer, String, DateTime
-from fastapi import FastAPI, HTTPException, Depends, Response
+from fastapi import FastAPI, HTTPException, Depends, Response, Security
 import docker
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import create_engine
+from fastapi.security import APIKeyHeader
+from fastapi.security.api_key import APIKeyHeader
+import os
 
 app = FastAPI(
     title="Nextlabs API",
     description="API for Nextlabs project",
 )
+
+header_scheme = APIKeyHeader(name="secret")
+secret_key = os.getenv("SECRET_KEY", "Heslo")
+
+
+def check_secret_key(header: str = Security(header_scheme)):
+    if header in secret_key:
+        return header
+    else:
+        raise HTTPException(status_code=401)
+
+
 client = docker.from_env()
 
 # read bagros.pub
@@ -64,7 +79,7 @@ class Container(BaseModel):
 
 
 @app.get("/containers/", response_model=list[Container], tags=["container"])
-def list_nextlabs_containers():
+def list_nextlabs_containers(api_key: str = Depends(check_secret_key)):
     containers = client.containers.list(all=True)
     nextlabs_containers = [
         container for container in containers
@@ -85,7 +100,7 @@ def list_nextlabs_containers():
 
 
 @app.post("/containers/", response_model=Container, tags=["container"])
-def run_container(email: EmailStr, container_image: str, public_key: str, db: Session = Depends(get_db)):
+def run_container(email: EmailStr, container_image: str, public_key: str, db: Session = Depends(get_db),  api_key: str = Depends(check_secret_key)):
     images = list_images()
     if container_image in images:
         stop_time = datetime.now() + timedelta(hours=1)
@@ -120,7 +135,7 @@ def run_container(email: EmailStr, container_image: str, public_key: str, db: Se
         raise HTTPException(status_code=404, detail="Image not found")
 
 
-def stop_due_containers():
+def stop_due_containers(api_key: str = Depends(check_secret_key)):
     db = SessionLocal()
     print("Stopping due containers")
     current_time = datetime.now()
@@ -140,7 +155,7 @@ def stop_due_containers():
     db.commit()
 
 
-def delete_old_stopped_containers():
+def delete_old_stopped_containers(api_key: str = Depends(check_secret_key)):
     db = SessionLocal()
     print("Deleting old stopped containers")
     one_hour_ago = datetime.now() - timedelta(hours=1)
@@ -160,7 +175,7 @@ def delete_old_stopped_containers():
 
 
 @app.delete("/containers/", tags=["container"])
-def delete_container(container_hostname: str):
+def delete_container(container_hostname: str, api_key: str = Depends(check_secret_key)):
     try:
         container = client.containers.get(container_hostname)
         if container.labels.get("project") != "nextlabs":
@@ -179,7 +194,7 @@ def delete_container(container_hostname: str):
 
 
 @app.post("/containers/stop/", tags=["container"])
-def stop_container(container_hostname: str):
+def stop_container(container_hostname: str, api_key: str = Depends(check_secret_key)):
     db = SessionLocal()
     try:
         container = client.containers.get(container_hostname)
@@ -194,7 +209,7 @@ def stop_container(container_hostname: str):
 
 
 @app.post("/containers/start/", tags=["container"])
-def start_container(container_name: str):
+def start_container(container_name: str, api_key: str = Depends(check_secret_key)):
     db = SessionLocal()
     stop_time = datetime.now() + timedelta(hours=1)
     try:
@@ -210,7 +225,7 @@ def start_container(container_name: str):
 
 
 @app.post("/containers/restart/", tags=["container"])
-def restart_container(container_name: str):
+def restart_container(container_name: str, api_key: str = Depends(check_secret_key)):
     try:
         container = client.containers.get(container_name)
         container.restart()
@@ -220,7 +235,7 @@ def restart_container(container_name: str):
 
 
 @app.get("/user/containers/", response_model=list[Container], tags=["user"])
-def list_user_containers(user_email: EmailStr):
+def list_user_containers(user_email: EmailStr, api_key: str = Depends(check_secret_key)):
     containers = client.containers.list(all=True)
     user_containers = [
         container for container in containers
@@ -241,7 +256,7 @@ def list_user_containers(user_email: EmailStr):
 
 
 @app.post("/user/containers/stop/", tags=["user"])
-def stop_user_containers(user_email: EmailStr):
+def stop_user_containers(user_email: EmailStr, api_key: str = Depends(check_secret_key)):
     db = SessionLocal()
     containers = client.containers.list(all=True)
     user_containers = [
@@ -259,7 +274,7 @@ def stop_user_containers(user_email: EmailStr):
 
 
 @app.get("/images/", tags=["image"])
-def list_images():
+def list_images(api_key: str = Depends(check_secret_key)):
     nextlabs_images = []
 
     for image in client.images.list():
@@ -317,7 +332,7 @@ def create_vpn_for_user(email: EmailStr):
 
 
 @app.get("/vpn/list", tags=["vpn"])
-def vpn_list():
+def vpn_list(api_key: str = Depends(check_secret_key)):
     # docker run --rm -it -v $OVPN_DATA:/etc/openvpn kylemanna/openvpn ovpn_listclients
     container = client.containers.run(
         vpn_image,
@@ -346,14 +361,14 @@ def vpn_list():
 
 
 @app.get("/vpn/download", tags=["vpn"])
-def get_user_vpn(email: EmailStr):
+def get_user_vpn(email: EmailStr, api_key: str = Depends(check_secret_key)):
     if not check_existing_vpn(email):
         create_vpn_for_user(email)
     return Response(content=download_vpn(email), media_type="text/plain")
 
 
 @app.delete("/vpn/delete", tags=["vpn"], deprecated=True)
-def delete_vpn_for_user(email: EmailStr):
+def delete_vpn_for_user(email: EmailStr, api_key: str = Depends(check_secret_key)):
     raise HTTPException(status_code=404, detail="Not implemented")
     if check_existing_vpn(email):
         client.containers.run(

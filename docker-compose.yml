@@ -54,6 +54,7 @@ services:
       - 3000
     networks:
       - monitor-net
+      - outbound
 
   # docker metrics
   cadvisor:
@@ -108,9 +109,11 @@ services:
       - monitor-net
 
   caddy:
-    image: caddy:2.7.6
+    image: caddy:latest
     container_name: caddy
     ports:
+      - "80:80"
+      - "443:443"
       - "3000:3000"
       - "9092:9092"
       - "9090:9090"
@@ -120,10 +123,10 @@ services:
       - ./monitoring/caddy:/etc/caddy
     restart: unless-stopped
     networks:
-      - monitor-net
+      - outbound
 
-  containers-api:
-    container_name: containers-api
+  api:
+    container_name: api
     build:
       context: api
     ports:
@@ -131,11 +134,17 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+    networks:
+      - outbound
 
 networks:
   nextlabs:
     external: true
   monitor-net:
+    driver: bridge
+  outbound:
     driver: bridge
 
 volumes:
