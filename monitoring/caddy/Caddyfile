@@ -6,6 +6,18 @@ api.nextlabs.cz {
     reverse_proxy http://api:8000
 }
 
+nextlabs.cz {
+    reverse_proxy http://nextjs:3000
+}
+
+adminer.nextlabs.cz {
+    reverse_proxy http://adminer:8080
+}
+
+phpmyadmin.nextlabs.cz {
+    reverse_proxy http://phpmyadmin:80
+}
+
 :9092 {
     reverse_proxy cadvisor:9092
 }

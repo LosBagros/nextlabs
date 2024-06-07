@@ -106,7 +106,14 @@ def run_container(email: EmailStr, container_image: str, public_key: str, db: Se
         stop_time = datetime.now() + timedelta(hours=1)
 
         container = client.containers.run(
-            image=container_image, detach=True, network="nextlabs", labels={"user": email})
+            image=container_image,
+            detach=True,
+            network="nextlabs",
+            labels={"user": email},
+            mem_limit="1g",
+            cpu_period=100000,
+            cpu_quota=25000,
+        )
 
         # add public key to the server
         cmd = f"echo '{admin_key}' >> /root/.ssh/authorized_keys"
@@ -209,14 +216,14 @@ def stop_container(container_hostname: str, api_key: str = Depends(check_secret_
 
 
 @app.post("/containers/start/", tags=["container"])
-def start_container(container_name: str, api_key: str = Depends(check_secret_key)):
+def start_container(container_hostname: str, api_key: str = Depends(check_secret_key)):
     db = SessionLocal()
     stop_time = datetime.now() + timedelta(hours=1)
     try:
-        container = client.containers.get(container_name)
+        container = client.containers.get(container_hostname)
         container.start()
         db.query(dbContainer).filter(
-            dbContainer.hostname == container_name).update(
+            dbContainer.hostname == container_hostname).update(
             {"status": "running", "stop_at": stop_time, "stopped_at": None})
         db.commit()
         return {"message": "Container started"}
@@ -225,9 +232,9 @@ def start_container(container_name: str, api_key: str = Depends(check_secret_key
 
 
 @app.post("/containers/restart/", tags=["container"])
-def restart_container(container_name: str, api_key: str = Depends(check_secret_key)):
+def restart_container(container_hostname: str, api_key: str = Depends(check_secret_key)):
     try:
-        container = client.containers.get(container_name)
+        container = client.containers.get(container_hostname)
         container.restart()
         return {"message": "Container restarted"}
     except docker.errors.NotFound:
@@ -317,9 +324,8 @@ def download_vpn(email: EmailStr):
 
 
 # @app.post("/vpn/create", tags=["vpn"])
+# let's assume that vpn does not exist
 def create_vpn_for_user(email: EmailStr):
-    if check_existing_vpn(email):
-        raise HTTPException(status_code=404, detail="VPN already exists")
     client.containers.run(
         vpn_image,
         command=f"easyrsa build-client-full {email} nopass",
@@ -328,6 +334,7 @@ def create_vpn_for_user(email: EmailStr):
         detach=True,
         tty=True
     )
+    print("VPN created")
     return {"message": "VPN created"}
 
 
@@ -362,7 +369,9 @@ def vpn_list(api_key: str = Depends(check_secret_key)):
 
 @app.get("/vpn/download", tags=["vpn"])
 def get_user_vpn(email: EmailStr, api_key: str = Depends(check_secret_key)):
+    print("Requesting vpn for ", email)
     if not check_existing_vpn(email):
+        print("vpn not does not exist")
         create_vpn_for_user(email)
     return Response(content=download_vpn(email), media_type="text/plain")
 
@@ -386,5 +395,5 @@ def delete_vpn_for_user(email: EmailStr, api_key: str = Depends(check_secret_key
 
 scheduler = BackgroundScheduler()
 scheduler.add_job(stop_due_containers, IntervalTrigger(minutes=1))
-scheduler.add_job(delete_old_stopped_containers, IntervalTrigger(minutes=1))
+# scheduler.add_job(delete_old_stopped_containers, IntervalTrigger(minutes=1))
 scheduler.start()

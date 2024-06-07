@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM ubuntu:20.04	
 
 # NEXTLABS
 LABEL project="nextlabs"
@@ -13,8 +13,8 @@ RUN apt update && apt install -y \
     build-essential \
     nodejs \
     npm \
-    openssh-server
-
+    openssh-server \
+    
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* 
 RUN echo 'Acquire::HTTP::Proxy "http://apt-cache:3142";' >> /etc/apt/apt.conf.d/01proxy \
     && echo 'Acquire::HTTPS::Proxy "false";' >> /etc/apt/apt.conf.d/01proxy
