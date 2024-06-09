@@ -1,9 +1,10 @@
-FROM ubuntu:20.04	
+FROM ubuntu	
 
 # NEXTLABS
 LABEL project="nextlabs"
+LABEL ssh=1
 
-RUN apt update && apt install -y \
+RUN apt update && apt install --no-install-recommends -y \
     nano \
     vim \
     curl \
@@ -13,13 +14,13 @@ RUN apt update && apt install -y \
     build-essential \
     nodejs \
     npm \
-    openssh-server \
+    openssh-server
     
-RUN apt-get clean && rm -rf /var/lib/apt/lists/* 
+RUN apt clean && rm -rf /var/lib/apt/lists/* 
 RUN echo 'Acquire::HTTP::Proxy "http://apt-cache:3142";' >> /etc/apt/apt.conf.d/01proxy \
     && echo 'Acquire::HTTPS::Proxy "false";' >> /etc/apt/apt.conf.d/01proxy
 
-RUN npm set registry http://verdaccio:4873/
+RUN npm set registry http://npm-cache:8081/repository/npm/
 
 RUN mkdir /var/run/sshd
 RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config

@@ -115,13 +115,16 @@ def run_container(email: EmailStr, container_image: str, public_key: str, db: Se
             cpu_quota=25000,
         )
 
-        # add public key to the server
-        cmd = f"echo '{admin_key}' >> /root/.ssh/authorized_keys"
-        container.exec_run(cmd=['sh', '-c', cmd])
+        labels = client.images.get(container_image).attrs.get(
+            "Config", {}).get("Labels", {})
+        if labels.get("ssh") == "1":
+            # add public key to the server
+            cmd = f"mkdir -p /root/.ssh ;echo '{admin_key}' >> /root/.ssh/authorized_keys"
+            container.exec_run(cmd=['sh', '-c', cmd])
 
-        cmd = f"echo '{public_key}' >> /root/.ssh/authorized_keys"
-        container.exec_run(cmd=['sh', '-c', cmd])
-        container.restart()
+            cmd = f"echo '{public_key}' >> /root/.ssh/authorized_keys"
+            container.exec_run(cmd=['sh', '-c', cmd])
+            container.restart()
 
         db_container = dbContainer(
             hostname=container.attrs["Config"]["Hostname"], status="running", stop_at=stop_time, image=container_image)

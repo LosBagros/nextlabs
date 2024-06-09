@@ -1,0 +1,9 @@
+FROM mariadb
+
+# NEXTLABS
+LABEL project="nextlabs"
+LABEL ssh=0
+
+# Set the environment variables
+ENV MARIADB_ROOT_PASSWORD=nextlabs
+

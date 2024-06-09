@@ -1,5 +1,4 @@
 apt-cache/cache/
-pypi-cache/
 .env
 verdaccio/storage/
 venv/
@@ -7,3 +6,4 @@ __pycache__/
 openvpn/
 bagros.ovpn
 nextauth/
+devpi/
