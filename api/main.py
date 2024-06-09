@@ -1,3 +1,4 @@
+import json
 from io import StringIO
 import csv
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -6,7 +7,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine, Column, Integer, String, DateTime
-from fastapi import FastAPI, HTTPException, Depends, Response, Security
+from fastapi import FastAPI, HTTPException, Depends, Response, Security, Request
 import docker
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import create_engine
@@ -99,8 +100,18 @@ def list_nextlabs_containers(api_key: str = Depends(check_secret_key)):
     return nextlabs_containers
 
 
-@app.post("/containers/", response_model=Container, tags=["container"])
-def run_container(email: EmailStr, container_image: str, public_key: str, db: Session = Depends(get_db),  api_key: str = Depends(check_secret_key)):
+class ContainerRequest(BaseModel):
+    email: EmailStr
+    container_image: str
+    public_key: str
+
+
+@app.post("/containers/", tags=["container"])
+def run_container(request: ContainerRequest, db: Session = Depends(get_db),  api_key: str = Depends(check_secret_key)):
+    email = request.email
+    container_image = request.container_image
+    public_key = request.public_key
+
     images = list_images()
     if container_image in images:
         stop_time = datetime.now() + timedelta(hours=1)
@@ -155,10 +166,11 @@ def stop_due_containers(api_key: str = Depends(check_secret_key)):
     for container in containers_to_stop:
         try:
             docker_container = client.containers.get(container.hostname)
+            print(container.hostname, "is due to stop")
             docker_container.stop()
-            container.status = "stopped"
-            print(f"Container {container.hostname} stopped")
-            container.stopped_at = datetime.now()
+            db.query(dbContainer).filter(
+                dbContainer.hostname == container.hostname).update(
+                {"status": "stopped", "stopped_at": datetime.now()})
         except Exception as e:
             print(f"Failed to stop container {container.hostname}: {str(e)}")
 
