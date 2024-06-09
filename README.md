@@ -1,58 +1,39 @@
-# Nextlabs - Server
+# Nextlabs
 
-## TODO:
+There is multiple repositories for this project. This is server side of the project.
 
-- [] Make vpn vork
-- [] Fastapi for controlling containers
-- [] Vpn account management for users using api
-- [] Documentation
+Frontend: https://github.com/LosBagros/nextlabs-website
 
-`docker run -dit --name ubuntu-container --network nextlabs ubuntu`
-
-## Cache
-
-There is cache containers for reducing network usage
-
-### Apt cache
-
-Using Apt-Cacher NG
-
-http://homelab:3142/
-
-http://homelab :3142/acng-report.html/
-
-#### Config for clients:
-
-```bash
-echo 'Acquire::HTTP::Proxy "http://apt-cache:3142";' >> /etc/apt/apt.conf.d/01proxy \
- && echo 'Acquire::HTTPS::Proxy "false";' >> /etc/apt/apt.conf.d/01proxy
-```
-
-### Pip cache
-
-Using pypiserver
-
-#### Config for clients:
+## Setup
 
 ```
-printf "[global]\nextra-index-url = http://pypi-cache:8080/simple/\ntrusted-host = pypi-cache:8080" > /root/.pip/pip.conf
+git clone https://github.com/LosBagros/nextlabs
+cd nextlabs
+git clone https://github.com/LosBagros/nextlabs-website nextauth
 ```
 
-### NpmJS cache
+Copy .env.example to .env and fill it with your data.
 
-Using verdaccio
+Do the same in `/nextauth` directory.
 
-```
-npm set registry http://verdaccio:4873/
-```
+Set up your domains in `/monitoring/Caddyfile`
+
+Ports 80 and 443 must be free and exposed.
 
 ## Docker setup
 
+Install docker https://docs.docker.com/engine/install/ubuntu/
+
+Create network
+
 ```
 docker network create nextlabs
+```
 
-# firewall for my local network
-sudo iptables -I DOCKER-USER -i docker0 -d 192.168.0.0/24 -j DROP
+Start project with
+
+```
+docker-compose up -d
 ```
 
 ## Monitoring
@@ -63,8 +44,12 @@ https://github.com/stefanprodan/dockprom/
 
 after several tries I am using solution from https://github.com/kylemanna/docker-openvpn/
 
-## Build containers
+## Build labs
 
 ```
-docker build -f Dockerfile.default -t nextlabs:default .
+cd labs
+docker build -f Dockerfile.ubuntu -t nextlabs:ubuntu .
+docker build -f Dockerfile.mariadb -t nextlabs:mariadb .
+docker build -f Dockerfile.python -t nextlabs:python .
+docker build -f Dockerfile.javascript -t nextlabs:javascript .
 ```
